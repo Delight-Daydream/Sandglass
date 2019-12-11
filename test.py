@@ -21,27 +21,33 @@ class image_learn:
     def tfinit(self):
 #        self.saver = tf.train.Saver(tf.global_variables())
         self.sess = tf.Session()
-        self.ckpt = tf.train.get_checkpoint_state('./model')
-        if self.ckpt and tf.train.checkpoint_exists(self.ckpt.model_checkpoint_path):
-            self.saver.restore(self.sess, self.ckpt.model_checkpoint_path)
-        else:
-            self.sess.run(tf.global_variables_initializer())
 
 #        self.input = tf.placeholder(tf.uint8, [None, self.unitsize])
-        self.x = tf.placeholder(tf.float32, [None, self.unitsize])
+        self.x = tf.placeholder(tf.float32, [1, self.unitsize])
+#        self.x = tf.placeholder(tf.float32)
         print("info of self.x ", self.x)
         self.global_step = tf.Variable(0, trainable=False, name='global_step')
 
         self.W = tf.Variable(tf.zeros([self.unitsize, 10]))
         self.b = tf.Variable(tf.zeros([10]))
-        self.res = tf.matmul(self.x, self.W)
+        self.res = tf.matmul(self.x, self.W) + self.b
 
         self.saver = tf.train.Saver(tf.global_variables())
+
+        self.ckpt = tf.train.get_checkpoint_state('./model')
+        if self.ckpt and tf.train.checkpoint_exists(self.ckpt.model_checkpoint_path):
+            print("Load model!")
+            self.saver.restore(self.sess, self.ckpt.model_checkpoint_path)
+        else:
+            print("Self init!")
+            self.sess.run(tf.global_variables_initializer())
 
     def learn(self):
         data = self.ifile.read(self.unitsize)
         
-        list_data = list(data)
+        _list_data = list(data)
+        list_data = list()
+        list_data.append(_list_data)
         """
         list_data = list()
         for i in list(range(self.unitsize)):
@@ -49,21 +55,9 @@ class image_learn:
             list_data.append(tmp)
         """
 
-        nparr = np.array(list_data)
-        nparr.reshape(1, 784)
-
-        test_data = list()
-        test_data.append(list_data)
-        test_data.append(list_data)
-        print("test_data : ", test_data)
-#        test_data.append(list_data)
-#        test_data.append(list_data)
-#        test_data.append(list_data)
-
-#        print("list size : ", len(data))
-#        print("list_data : ", list_data)
-#        self.sess.run(self.res, feed_dict={self.x: list_data})
-        self.sess.run(self.res, feed_dict={self.x: nparr})
+        print("list size : ", len(data))
+        print("list_data : ", list_data)
+        self.sess.run(self.res, feed_dict={self.x: list_data})
         self.global_step = tf.add(self.global_step, tf.constant(1))
 
     def end(self):
