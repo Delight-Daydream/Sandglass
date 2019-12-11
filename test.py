@@ -23,11 +23,16 @@ class image_learn:
         self.sess = tf.Session()
 
         self.x = tf.placeholder(tf.float32, [None, self.unitsize])
-        self.global_step = tf.Variable(0, trainable=False, name='global_step')
 
         self.W = tf.Variable(tf.zeros([self.unitsize, 10]))
         self.b = tf.Variable(tf.zeros([10]))
         self.y = tf.nn.softmax(tf.matmul(self.x, self.W) + self.b)
+        self.y_ = tf.placeholder(tf.float32, [None, 10])
+        self.crossentropy = tf.reduce_mean(-tf.reduce_sum(self.y_ * tf.log(self.y), reduction_indices = [1]))
+        self.train_step = tf.train.GradientDescentOptimizer(0.5).minimize(self.crossentropy)
+
+        self.correct_prediction = tf.equal(tf.argmax(self.y, 1), tf.argmax(self.y_, 1))
+        self.accuracy = tf.reduce_mean(tf.cast(self.correct_prediction, tf.float32))
 
         self.saver = tf.train.Saver(tf.global_variables())
 
@@ -44,8 +49,12 @@ class image_learn:
         idata = self.ifile.read(self.unitsize)
         ldata = self.lfile.read(1)
 
-        label_data = list(ldata)
-        print("ldata :", label_data)
+        _label_data = list()
+        for i in range(10):
+            _label_data.append(0)
+        _label_data[int.from_bytes(ldata, 'big')] = 1
+        label_data = list()
+        label_data.append(_label_data)
 
         _image_data = list(idata)
         image_data = list()
@@ -53,28 +62,17 @@ class image_learn:
 
 #        print("list size : ", len(data))
 #        print("image_data : ", image_data)
-        print(self.sess.run(self.y, feed_dict={self.x: image_data}))
-        self.global_step = tf.add(self.global_step, tf.constant(1))
+#        print(self.sess.run(self.train_step, feed_dict={self.x: image_data, self.y_:[[0,1,2,3,4,5,6,7,8,9]]}))
+        print(self.sess.run(self.train_step, feed_dict={self.x: image_data, self.y_: label_data}))
+        print(self.sess.run(self.accuracy, feed_dict={self.x: image_data, self.y_: label_data}))
 
     def end(self):
-        self.saver.save(self.sess, './model/network.ckpt', global_step=self.global_step)
-
-    def dump(self):
-        print(self.ipath)
-        print(self.lpath)
-        print(self.imagic)
-        print(self.icount)
-        print(self.irows)
-        print(self.icols)
-        print(self.lmagic)
-        print(self.lcount)
+        self.saver.save(self.sess, './model/network.ckpt')
 
 #ifile = open("./lab/t10k-images-idx3-ubyte", "rb")
 #lfile = open("./lab/t10k-labels-idx1-ubyte", "rb")
 
 a = image_learn()
-
-a.dump()
 
 a.tfinit()
 a.learn()

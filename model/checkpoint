@@ -1,2 +1,2 @@
-model_checkpoint_path: "network.ckpt-6"
-all_model_checkpoint_paths: "network.ckpt-6"
+model_checkpoint_path: "network.ckpt"
+all_model_checkpoint_paths: "network.ckpt"
